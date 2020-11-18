@@ -3,12 +3,14 @@ package org.example;
 import org.example.stubs.TestInputStream;
 import org.example.stubs.TestOutputStream;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class EchoServiceTest {
 
@@ -20,21 +22,27 @@ class EchoServiceTest {
         EchoService echoService = new EchoService();
 
         String request = "Hello World!";
+        byte []messageInBytes = new byte[]{
+                'H','e','l','l','o',' ','W','o','r','l','d','!'
+        };
 
 
-        TestOutputStream outputStream = new TestOutputStream();
-        InputStream inputStream = new TestInputStream(request);
+        OutputStream outputStream = mock(OutputStream.class);
+        InputStream inputStream = mock(InputStream.class);
+
+        when(inputStream.readAllBytes()).thenReturn(messageInBytes);
 
         //when:
         boolean response = echoService.sendEchoMessage(request, outputStream, inputStream);
 
         //then:
-         String messageSent = outputStream.getMessageSent();
 
-         assertEquals(request, messageSent);
+        verify(inputStream).readAllBytes();
+        verify(outputStream).write(messageInBytes);
+        verifyNoMoreInteractions(inputStream, outputStream);
 
 
-         assertTrue(response);
+        assertTrue(response);
 
     }
 
@@ -44,21 +52,31 @@ class EchoServiceTest {
         EchoService echoService = new EchoService();
 
         String request = "Hello World!";
+        byte []messageResponse = new byte[]{
+                'H','e','l','l','o',' ','W','o','r','l','d','!','!'
+
+        };
+        byte []messageRequest = new byte[]{
+                'H','e','l','l','o',' ','W','o','r','l','d','!'
+        };
 
 
-        TestOutputStream outputStream = new TestOutputStream();
-        InputStream inputStream = new TestInputStream("Otra cosa");
+        OutputStream outputStream = mock(OutputStream.class);
+        InputStream inputStream = mock(InputStream.class);
+
+        when(inputStream.readAllBytes()).thenReturn(messageResponse);
 
         //when:
         boolean response = echoService.sendEchoMessage(request, outputStream, inputStream);
 
         //then:
-        String messageSent = outputStream.getMessageSent();
-
-        assertEquals(request, messageSent);
 
 
-         assertTrue(response);
+         verify(inputStream).readAllBytes();
+         verify(outputStream).write(messageRequest);
+         verifyNoMoreInteractions(inputStream, outputStream);
+
+        assertFalse(response);
 
     }
 
